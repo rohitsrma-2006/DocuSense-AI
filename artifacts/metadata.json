@@ -1,0 +1,16 @@
+{
+  "model_name": "AI Content Detection & PPTX Analysis Ensemble",
+  "vectorizer": "TfidfVectorizer(max_features=10000, ngram_range=(1,2))",
+  "ensemble": "0.60 * XGBoost + 0.40 * SGDClassifier(log_loss)",
+  "reported_metrics": {
+    "accuracy": 0.952,
+    "precision_ai": 0.96,
+    "recall_ai": 0.93,
+    "f1_ai": 0.945,
+    "turnaround_seconds_20slides": 2.68
+  },
+  "target_labels": {
+    "0": "Human-written",
+    "1": "AI-generated"
+  }
+}

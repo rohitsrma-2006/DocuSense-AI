@@ -1,0 +1,12 @@
+{
+  "intern": {
+    "username": "intern",
+    "email": "rohit.sharma@novemcontrols.com",
+    "password_hash": "a66fc10610ec5a009ecb8f5d57ac2618$d730a481da369af7ebacbc6ed16b6d1c5976f2610e4a1c13a2ad894a6acee18e"
+  },
+  "rohit": {
+    "username": "@Rohit",
+    "email": "rohit.sharma@novemcontrols.com",
+    "password_hash": "a5c800f44ae35d9124b8d6ca63e4a3cc$cdb01937b94adf1dfd3ab1d9ba8d29317338a2760d2502056c1d651a98ff3dee"
+  }
+}

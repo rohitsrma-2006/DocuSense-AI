@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Login | AI Content Detection & Document Analysis{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h2>System Authentication</h2>
+            <p>Access the AI Content Detection & Slide Quality Audit Portal</p>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        <div class="auth-tabs">
+            <button class="auth-tab-btn active" id="tabLoginBtn" onclick="switchAuthTab('login')">Sign In</button>
+            <button class="auth-tab-btn" id="tabRegisterBtn" onclick="switchAuthTab('register')">Register</button>
+        </div>
+
+        <!-- Sign In Form (Figure D.1) -->
+        <form action="{{ url_for('login_view') }}" method="POST" id="loginForm" class="auth-form active">
+            <div class="form-group">
+                <label for="username">Username or Email</label>
+                <input type="text" id="username" name="username" placeholder="e.g. @Rohit" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Sign In with PBKDF2</button>
+            <div class="demo-credentials">
+                <strong>Evaluation Credentials:</strong><br>
+                Username: <code>@Rohit</code> | Password: <code>rohit123</code>
+            </div>
+        </form>
+
+        <!-- Register Form -->
+        <form action="{{ url_for('register_view') }}" method="POST" id="registerForm" class="auth-form">
+            <div class="form-group">
+                <label for="reg_username">Username</label>
+                <input type="text" id="reg_username" name="username" placeholder="Choose a username" required>
+            </div>
+            <div class="form-group">
+                <label for="reg_email">Institutional Email</label>
+                <input type="email" id="reg_email" name="email" placeholder="name@college.edu">
+            </div>
+            <div class="form-group">
+                <label for="reg_password">Password (minimum 6 characters)</label>
+                <input type="password" id="reg_password" name="password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn btn-secondary btn-block">Create Account</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function switchAuthTab(type) {
+    document.getElementById('tabLoginBtn').classList.toggle('active', type === 'login');
+    document.getElementById('tabRegisterBtn').classList.toggle('active', type === 'register');
+    document.getElementById('loginForm').classList.toggle('active', type === 'login');
+    document.getElementById('registerForm').classList.toggle('active', type === 'register');
+}
+</script>
+{% endblock %}

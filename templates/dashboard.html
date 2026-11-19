@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | AI Content Detection & Slide Analysis{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <!-- Top KPI Cards (Figure D.2) -->
+    <section class="kpi-grid">
+        <div class="kpi-card">
+            <span class="kpi-title">Classification Ensemble</span>
+            <span class="kpi-value text-cyan">60% XGB + 40% SGD</span>
+            <span class="kpi-sub">TF-IDF 10,000 Unigram/Bigram</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-title">Reported Accuracy</span>
+            <span class="kpi-value text-emerald">95.2%</span>
+            <span class="kpi-sub">Precision: 0.96 | Recall: 0.93</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-title">Turnaround Benchmark</span>
+            <span class="kpi-value">~2.68 s</span>
+            <span class="kpi-sub">20-Slide Presentation Deck</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-title">Audit Engine Status</span>
+            <span class="kpi-value text-purple">3 Heuristic Rules</span>
+            <span class="kpi-sub">Density, Imagery, Typography</span>
+        </div>
+    </section>
+
+    <!-- Main Workspace Split: Upload & Direct Input -->
+    <div class="workspace-grid">
+        <!-- Left: Upload & Input Panel (Figure D.3) -->
+        <div class="card glass-card">
+            <div class="card-header">
+                <h3>Document Upload & Analysis Form</h3>
+                <span class="badge">Figure D.3</span>
+            </div>
+
+            <div class="tabs-control">
+                <button class="mode-tab active" id="tabPptxMode" onclick="switchInputMode('pptx')">PowerPoint (.pptx)</button>
+                <button class="mode-tab" id="tabTextMode" onclick="switchInputMode('text')">Direct Text Paste</button>
+            </div>
+
+            <!-- PPTX Upload Box -->
+            <div id="pptxUploadContainer" class="upload-mode-panel active">
+                <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+                    <input type="file" id="fileInput" accept=".pptx" style="display: none;" onchange="handleFileSelect(event)">
+                    <div class="drop-icon">📊</div>
+                    <h4>Drop PowerPoint presentation here</h4>
+                    <p class="text-muted">or click to browse (.pptx format, max 20 MB)</p>
+                    <div class="file-chosen-name" id="chosenFileName">No file selected</div>
+                </div>
+
+                <div class="upload-actions">
+                    <button class="btn btn-primary btn-block" id="btnAnalyzePptx" onclick="uploadAndAnalyzePPTX()">
+                        🚀 Analyze Presentation
+                    </button>
+                    <button class="btn btn-secondary btn-block mt-2" onclick="loadSamplePresentation()">
+                        📁 Load Pre-Built Sample (sample_presentation.pptx)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Direct Text Paste Box -->
+            <div id="textUploadContainer" class="upload-mode-panel">
+                <textarea id="rawTextInput" class="raw-textarea" rows="8" placeholder="Paste paragraph, essay, or slide notes here to inspect sentence-level AI probabilities..."></textarea>
+                <button class="btn btn-primary btn-block mt-2" onclick="analyzeDirectText()">
+                    🔍 Inspect Text
+                </button>
+            </div>
+
+            <!-- Defensive Notice -->
+            <div class="ethical-notice mt-3">
+                <strong>⚖️ Responsible AI Notice (Section 8.3):</strong>
+                Statistical classifier outputs must not be treated as forensic proof of authorship. Scores represent probabilistic lexical patterns learned from training data and require contextual human review.
+            </div>
+        </div>
+
+        <!-- Right: Results & Document Summary Panel -->
+        <div class="card glass-card">
+            <div class="card-header">
+                <h3>Document Summary & Quality Metrics</h3>
+                <span class="badge" id="docBadge">Ready</span>
+            </div>
+
+            <div id="summaryPlaceholder" class="placeholder-box">
+                <span>Upload a presentation or load the sample deck to inspect slide metrics, sentence scores, and grounded RAG questions.</span>
+            </div>
+
+            <div id="summaryContent" style="display: none;">
+                <div class="doc-meta-row">
+                    <div><strong>File:</strong> <span id="metaFilename">--</span></div>
+                    <div><strong>Slides:</strong> <span id="metaSlides">0</span></div>
+                    <div><strong>Total Words:</strong> <span id="metaWords">0</span></div>
+                    <div><strong>Overall AI Score:</strong> <span id="metaOverallScore" class="font-bold">--</span></div>
+                </div>
+
+                <div class="quality-score-bar mt-3">
+                    <div class="q-label">Overall AI-Likeness Probability Band</div>
+                    <div class="prob-progress-wrap">
+                        <div class="prob-progress-fill" id="overallProbFill" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <div class="summary-box mt-3">
+                    <div class="s-title">Extractive Summary (Section 3.7):</div>
+                    <ul id="summaryList" class="summary-list"></ul>
+                </div>
+
+                <div class="tone-box mt-3">
+                    <div class="s-title">Lexicon Tone Classification:</div>
+                    <div id="toneBadge" class="tone-badge">Evaluating</div>
+                    <div id="toneIndicators" class="text-muted" style="font-size: 0.75rem; margin-top: 4px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Section: Tabs for Slide Audit, Sentence Highlighting & Grounded RAG -->
+    <section class="results-section mt-4">
+        <div class="results-tab-bar">
+            <button class="res-tab-btn active" onclick="switchResultTab('tab-sentences')">
+                <span>Sentence Probability Highlighting</span>
+                <span class="badge-mini">Figure D.4</span>
+            </button>
+            <button class="res-tab-btn" onclick="switchResultTab('tab-slides')">
+                <span>Slide Quality & Audit Warnings</span>
+                <span class="badge-mini">Figure D.5</span>
+            </button>
+            <button class="res-tab-btn" onclick="switchResultTab('tab-rag')">
+                <span>Grounded RAG Question Answering</span>
+                <span class="badge-mini">Figure D.6</span>
+            </button>
+        </div>
+
+        <!-- TAB 1: Sentence Probability Highlighting (Figure D.4) -->
+        <div id="tab-sentences" class="res-tab-content active">
+            <div class="card glass-card">
+                <div class="legend-row">
+                    <span class="legend-chip high"><span class="color-dot high"></span> High AI Likeness (&ge; 0.70)</span>
+                    <span class="legend-chip medium"><span class="color-dot medium"></span> Moderate / Ambiguous (0.40 - 0.70)</span>
+                    <span class="legend-chip low"><span class="color-dot low"></span> Likely Human (&lt; 0.40)</span>
+                    <span class="legend-chip insufficient"><span class="color-dot insufficient"></span> Insufficient Text (&lt; 5 tokens)</span>
+                </div>
+                <div id="sentenceHighlightContainer" class="highlight-container mt-3">
+                    <p class="text-muted">No sentences analyzed yet.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: Slide Warnings & Heuristic Checks (Figure D.5) -->
+        <div id="tab-slides" class="res-tab-content">
+            <div class="card glass-card">
+                <div class="audit-rules-banner">
+                    <div><strong>Rule 1 (Text Density):</strong> Word count &gt; 40 words</div>
+                    <div><strong>Rule 2 (Visual Balance):</strong> Word count &gt; 10 words &amp; no detected picture</div>
+                    <div><strong>Rule 3 (Typography):</strong> Explicit run font size &lt; 18 pt</div>
+                </div>
+                <div id="slidesListContainer" class="slides-container mt-3">
+                    <p class="text-muted">No presentation parsed yet.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: Grounded RAG Chat (Figure D.6) -->
+        <div id="tab-rag" class="res-tab-content">
+            <div class="card glass-card">
+                <div class="rag-header">
+                    <h4>Retrieval-Augmented Generation (RAG) Slide Explorer</h4>
+                    <p class="text-muted">Ask questions strictly grounded in the presentation slides. The engine cites exact slide numbers and abstains if information is missing.</p>
+                </div>
+
+                <div class="chat-container">
+                    <div id="ragChatHistory" class="rag-history">
+                        <div class="rag-msg bot">
+                            <div class="bubble">
+                                Hello! Ask me any question regarding the uploaded presentation. All answers are strictly grounded in extracted slide text with citations.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rag-input-box">
+                        <input type="text" id="ragInput" placeholder="e.g. What happens to slides with pure text?" onkeydown="if(event.key==='Enter') sendRAGQuery()">
+                        <button class="btn btn-primary" onclick="sendRAGQuery()">Ask Presentation</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}
