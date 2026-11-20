@@ -12,8 +12,8 @@ echo Credentials for Login:
 echo   Username: @Rohit
 echo   Password: rohit123
 echo.
-echo [*] Opening your browser at http://127.0.0.1:5000 ...
-start "" "http://127.0.0.1:5000" 2>nul || explorer "http://127.0.0.1:5000"
+echo [*] Opening your browser at http://127.0.0.1:5000/login ...
+start "" "http://127.0.0.1:5000/login" 2>nul || explorer "http://127.0.0.1:5000/login"
 echo.
 python app.py
 pause
