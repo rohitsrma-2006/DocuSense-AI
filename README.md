@@ -55,6 +55,7 @@ Traverses OpenXML shape hierarchies with dual-engine support (`python-pptx` with
 * Answers user questions about the presentation with **mandatory slide citations** (e.g., `(Ref: Slide 3)`).
 * **Strict Abstention:** If queried facts are not in the presentation, it replies:  
   *"The uploaded presentation does not contain sufficient information to answer this query."*
+* Summary requests (for example, "summarize this presentation") use all indexed slides, chunked to fit the local model's context window.
 * **Prompt Injection Defense:** Treats presentation text strictly as passive data.
 * Uses a local Ollama model to synthesize answers from retrieved passages. Install and run Ollama with `phi:latest` available; configure `OLLAMA_MODEL` and `OLLAMA_BASE_URL` to use a different local model or Ollama endpoint. RAG questions return an error if Ollama is unavailable.
 
