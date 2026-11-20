@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 
 from core.classifier import ContentClassifier
 from services.pptx_parser import PresentationParser
-from services.rag_service import SlideRAGService
+from services.rag_service import OllamaGenerationError, SlideRAGService
 from services.document_utils import analyze_tone, extractive_summarize
 from models.user import UserManager
 
@@ -188,7 +188,16 @@ def presentation_chat():
     if not query.strip():
         return jsonify(error="Query cannot be empty"), 400
 
-    result = rag_service.answer_query(query)
+    try:
+        result = rag_service.answer_query(query)
+    except OllamaGenerationError as exc:
+        app.logger.error("Local RAG generation failed: %s", exc)
+        return jsonify(
+            error=(
+                "Local Phi generation failed. Check that Ollama is running "
+                "and the configured model is installed."
+            )
+        ), 503
     return jsonify(result)
 
 @app.get("/api/meta")

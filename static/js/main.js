@@ -247,7 +247,7 @@ async function sendRAGQuery() {
     // Append bot thinking
     const bMsg = document.createElement('div');
     bMsg.className = 'rag-msg bot';
-    bMsg.innerHTML = `<div class="bubble text-muted">Searching indexed slide passages...</div>`;
+    bMsg.innerHTML = `<div class="bubble text-muted">Searching slides and asking local Phi...</div>`;
     history.appendChild(bMsg);
     history.scrollTop = history.scrollHeight;
 
@@ -258,6 +258,9 @@ async function sendRAGQuery() {
             body: JSON.stringify({ query })
         });
         const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.error || 'The local RAG request failed.');
+        }
         bMsg.innerHTML = `<div class="bubble">${escapeHtml(data.answer)}</div>`;
     } catch (err) {
         bMsg.innerHTML = `<div class="bubble text-rose">Error: ${err.message}</div>`;

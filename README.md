@@ -56,6 +56,7 @@ Traverses OpenXML shape hierarchies with dual-engine support (`python-pptx` with
 * **Strict Abstention:** If queried facts are not in the presentation, it replies:  
   *"The uploaded presentation does not contain sufficient information to answer this query."*
 * **Prompt Injection Defense:** Treats presentation text strictly as passive data.
+* Uses a local Ollama model to synthesize answers from retrieved passages. Install and run Ollama with `phi:latest` available; configure `OLLAMA_MODEL` and `OLLAMA_BASE_URL` to use a different local model or Ollama endpoint. RAG questions return an error if Ollama is unavailable.
 
 ### 4. Document Tone & Extractive Summarization
 * Lexicon-based tone analysis (Academic, Analytical, Promotional, Cautious).
