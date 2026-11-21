@@ -23,14 +23,14 @@
         <form action="{{ url_for('login_view') }}" method="POST" id="loginForm" class="auth-form active">
             <div class="form-group">
                 <label for="username">Username or Email</label>
-                <input type="text" id="username" name="username" placeholder="e.g. @Rohit" required>
+                <input type="text" id="username" name="username" placeholder="e.g. @Rohit" value="@Rohit" required>
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="••••••••" required>
+                <input type="password" id="password" name="password" placeholder="••••••••" value="rohit123" required>
             </div>
             <button type="submit" class="btn btn-primary btn-block">Sign In with PBKDF2</button>
-            <div class="demo-credentials">
+            <div class="demo-credentials" style="cursor: pointer;" onclick="autofillDemo()" title="Click to fill evaluation credentials">
                 <strong>Evaluation Credentials:</strong><br>
                 Username: <code>@Rohit</code> | Password: <code>rohit123</code>
             </div>
@@ -61,6 +61,11 @@ function switchAuthTab(type) {
     document.getElementById('tabRegisterBtn').classList.toggle('active', type === 'register');
     document.getElementById('loginForm').classList.toggle('active', type === 'login');
     document.getElementById('registerForm').classList.toggle('active', type === 'register');
+}
+
+function autofillDemo() {
+    document.getElementById('username').value = '@Rohit';
+    document.getElementById('password').value = 'rohit123';
 }
 </script>
 {% endblock %}
