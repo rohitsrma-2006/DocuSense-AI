@@ -44,5 +44,54 @@
     </footer>
 
     {% block scripts %}{% endblock %}
+
+    <!-- Automatic session heartbeat & tab-close auto-termination handler -->
+    <script>
+    (function() {
+        const tabKey = 'docusense_tab_id';
+        let tabId = sessionStorage.getItem(tabKey);
+        if (!tabId) {
+            tabId = 'tab_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now();
+            sessionStorage.setItem(tabKey, tabId);
+        }
+
+        function ping() {
+            fetch('/api/heartbeat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tab_id: tabId }),
+                keepalive: true
+            }).catch(function() {});
+        }
+
+        // Send initial heartbeat and repeat periodically
+        ping();
+        setInterval(ping, 2000);
+
+        // Ping when tab becomes visible again
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) ping();
+        });
+
+        // Notify server when tab is closed or navigated
+        function notifyTabClose() {
+            const payload = JSON.stringify({ tab_id: tabId });
+            if (navigator.sendBeacon) {
+                const blob = new Blob([payload], { type: 'application/json' });
+                navigator.sendBeacon('/api/tab-closed', blob);
+            } else {
+                fetch('/api/tab-closed', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: payload,
+                    keepalive: true
+                }).catch(function() {});
+            }
+        }
+
+        window.addEventListener('pagehide', notifyTabClose);
+        window.addEventListener('beforeunload', notifyTabClose);
+    })();
+    </script>
 </body>
 </html>

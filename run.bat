@@ -12,8 +12,7 @@ echo Credentials for Login:
 echo   Username: @Rohit
 echo   Password: rohit123
 echo.
-echo [*] Opening your browser at http://127.0.0.1:5000/login ...
-start "" "http://127.0.0.1:5000/login" 2>nul || explorer "http://127.0.0.1:5000/login"
+echo [*] Note: Closing the browser tab will automatically terminate this batch job.
 echo.
 python app.py
-pause
+exit /b 0

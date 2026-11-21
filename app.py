@@ -31,6 +31,92 @@ user_manager.register_user("@Rohit", "rohit123", "rohit.sharma@novemcontrols.com
 # In-memory store for active session document metadata
 session_documents = {}
 
+# Active browser tab tracker for auto-terminating the server/batch job on tab close
+import time
+import threading
+
+class TabSessionTracker:
+    def __init__(self, heartbeat_timeout=15.0, close_grace_period=3.0):
+        self.active_tabs = {}  # tab_id -> last_seen_time
+        self.lock = threading.Lock()
+        self.heartbeat_timeout = heartbeat_timeout
+        self.close_grace_period = close_grace_period
+        self.has_ever_connected = False
+        self.shutdown_timer = None
+        self.enabled = False
+
+    def start(self):
+        self.enabled = True
+        t = threading.Thread(target=self._monitor_loop, daemon=True)
+        t.start()
+
+    def record_heartbeat(self, tab_id):
+        if not self.enabled:
+            return
+        with self.lock:
+            self.has_ever_connected = True
+            self.active_tabs[tab_id] = time.time()
+            if self.shutdown_timer:
+                self.shutdown_timer.cancel()
+                self.shutdown_timer = None
+
+    def record_tab_closed(self, tab_id):
+        if not self.enabled:
+            return
+        with self.lock:
+            self.active_tabs.pop(tab_id, None)
+            now = time.time()
+            alive = [tid for tid, ts in self.active_tabs.items() if now - ts < self.heartbeat_timeout]
+            if not alive and self.has_ever_connected:
+                self._schedule_shutdown()
+
+    def _schedule_shutdown(self):
+        if self.shutdown_timer is None:
+            self.shutdown_timer = threading.Timer(self.close_grace_period, self._terminate)
+            self.shutdown_timer.daemon = True
+            self.shutdown_timer.start()
+
+    def _terminate(self):
+        print("\n" + "="*65)
+        print(" [*] Browser tab closed. Automatically terminating DocuSense AI server and batch job...")
+        print("="*65 + "\n")
+        os._exit(0)
+
+    def _monitor_loop(self):
+        while self.enabled:
+            time.sleep(1.5)
+            now = time.time()
+            with self.lock:
+                if not self.has_ever_connected:
+                    continue
+                stale = [tid for tid, ts in self.active_tabs.items() if now - ts > self.heartbeat_timeout]
+                for tid in stale:
+                    self.active_tabs.pop(tid, None)
+                if not self.active_tabs:
+                    self._schedule_shutdown()
+
+tab_tracker = TabSessionTracker()
+
+@app.post("/api/heartbeat")
+def tab_heartbeat():
+    data = request.get_json(silent=True) or {}
+    tab_id = data.get("tab_id", "default")
+    tab_tracker.record_heartbeat(tab_id)
+    return jsonify(status="ok")
+
+@app.post("/api/tab-closed")
+def tab_closed():
+    data = request.get_json(silent=True)
+    if not data and request.data:
+        try:
+            import json
+            data = json.loads(request.data.decode("utf-8", errors="ignore"))
+        except Exception:
+            data = {}
+    tab_id = (data or {}).get("tab_id", "default")
+    tab_tracker.record_tab_closed(tab_id)
+    return jsonify(status="ok")
+
 @app.route("/")
 def index():
     if "user" not in session:
@@ -233,14 +319,18 @@ if __name__ == "__main__":
     import webbrowser
     import threading
 
+    # Enable browser tab close detection & auto-termination
+    tab_tracker.start()
+
     def open_browser():
         try:
-            webbrowser.open_new("http://127.0.0.1:5000")
+            webbrowser.open_new("http://127.0.0.1:5000/login")
         except Exception:
             pass
 
-    # Automatically launch default browser 1 second after server starts
+    # Automatically launch default browser 1.2s after server starts
     threading.Timer(1.2, open_browser).start()
     print(" * DocuSense AI running on http://127.0.0.1:5000")
-    print(" * Opening your browser automatically...")
+    print(" * Opening browser automatically at http://127.0.0.1:5000/login ...")
+    print(" * [Auto-Terminate] Batch job will automatically exit when you close the browser tab.")
     app.run(host="127.0.0.1", port=5000, debug=False)
